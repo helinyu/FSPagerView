@@ -28,6 +28,8 @@ open class FSPagerViewTransformer: NSObject {
     
     @objc open var minimumScale: CGFloat = 0.65
     @objc open var minimumAlpha: CGFloat = 0.6
+    open var overlapToSide: Bool = false
+    open var moveOffsetY: CGFloat = 0
     
     @objc
     public init(type: FSPagerViewTransformerType) {
@@ -147,17 +149,51 @@ open class FSPagerViewTransformer: NSObject {
             attributes.alpha = alpha
             attributes.transform = transform
             attributes.zIndex = zIndex
+//        case .overlap,.linear:
+//            guard scrollDirection == .horizontal else {
+//                // This type doesn't support vertical mode
+//                return
+//            }
+//            let scale = max(1 - (1-self.minimumScale) * abs(position), self.minimumScale)
+//            let transform = CGAffineTransform(scaleX: scale, y: scale)
+//            attributes.transform = transform
+//            let alpha = (self.minimumAlpha + (1-abs(position))*(1-self.minimumAlpha))
+//            attributes.alpha = alpha
+//            let zIndex = (1-abs(position)) * 10
+//            attributes.zIndex = Int(zIndex)
         case .overlap,.linear:
             guard scrollDirection == .horizontal else {
                 // This type doesn't support vertical mode
                 return
             }
-            let scale = max(1 - (1-self.minimumScale) * abs(position), self.minimumScale)
-            let transform = CGAffineTransform(scaleX: scale, y: scale)
-            attributes.transform = transform
-            let alpha = (self.minimumAlpha + (1-abs(position))*(1-self.minimumAlpha))
+            
+            let scale = max(1 - (1 - self.minimumScale) * abs(position), self.minimumScale)
+            let scaleTransform = CGAffineTransform(scaleX: scale, y: scale)
+            
+            if self.overlapToSide == true {
+                // 往下偏移
+                let translationY = abs(position) * moveOffsetY // 往下偏移多少距离
+                let ratio = 667.0 / 375.0
+                let detaWidth: CGFloat = (UIScreen.main.bounds.width - (self.pagerView?.itemSize.width ?? 306.0 * ratio)) / 2.0
+                let sideCellWidth = (self.pagerView?.itemSize.width ?? 306 * ratio) * self.minimumScale
+                var toCenterLength: CGFloat = 0
+                if detaWidth < sideCellWidth {
+                    toCenterLength = sideCellWidth - detaWidth
+                }
+                let translationX = -position * toCenterLength
+                let translateTransform = CGAffineTransform(translationX: translationX, y: translationY)
+                
+                // 组合 缩放 + 平移
+                let transform = scaleTransform.concatenating(translateTransform)
+                attributes.transform = transform
+            }
+            
+            // 透明度处理：中心 1.0，两边 minimumAlpha
+            let alpha = (self.minimumAlpha + (1 - abs(position)) * (1 - self.minimumAlpha))
             attributes.alpha = alpha
-            let zIndex = (1-abs(position)) * 10
+            
+            // 层级：中心最高，越远越低
+            let zIndex = (1 - abs(position)) * 10
             attributes.zIndex = Int(zIndex)
         case .coverFlow:
             guard scrollDirection == .horizontal else {
