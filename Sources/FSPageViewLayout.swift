@@ -20,6 +20,7 @@ class FSPagerViewLayout: UICollectionViewLayout {
         return FSPagerViewLayoutAttributes.self
     }
     
+    
     fileprivate var pagerView: FSPagerView? {
         return self.collectionView?.superview?.superview as? FSPagerView
     }

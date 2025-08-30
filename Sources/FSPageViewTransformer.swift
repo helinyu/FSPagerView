@@ -30,6 +30,7 @@ open class FSPagerViewTransformer: NSObject {
     @objc open var minimumAlpha: CGFloat = 0.6
     open var overlapToSide: Bool = false
     open var moveOffsetY: CGFloat = 0
+    open var absoluteAlpha: Bool = false // 显示决定的颜色值，没有透明度
     
     @objc
     public init(type: FSPagerViewTransformerType) {
@@ -188,9 +189,15 @@ open class FSPagerViewTransformer: NSObject {
                 attributes.transform = transform
             }
             
-            // 透明度处理：中心 1.0，两边 minimumAlpha
-            let alpha = (self.minimumAlpha + (1 - abs(position)) * (1 - self.minimumAlpha))
-            attributes.alpha = alpha
+            if absoluteAlpha == true {
+                attributes.alpha = 1
+            }
+            else {
+                // 透明度处理：中心 1.0，两边 minimumAlpha
+                let alpha = (self.minimumAlpha + (1 - abs(position)) * (1 - self.minimumAlpha))
+                attributes.alpha = alpha
+            }
+            
             
             // 层级：中心最高，越远越低
             let zIndex = (1 - abs(position)) * 10
